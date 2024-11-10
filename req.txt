@@ -1,9 +1,0 @@
-pandas
-scipy
-plotly
-seaborn
-matplotlib
-scikit-learn
-numpy
-nbformat>=4.2.0
-tabulate
