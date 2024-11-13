@@ -1,0 +1,45 @@
+{
+    "Random Forest": {
+        "bootstrap": false,
+        "max_depth": 10,
+        "min_samples_leaf": 1,
+        "min_samples_split": 10,
+        "n_estimators": 50
+    },
+    "Decision Tree": {
+        "criterion": "entropy",
+        "max_depth": null,
+        "min_samples_leaf": 1,
+        "min_samples_split": 2
+    },
+    "Logistic Regression": {
+        "C": 0.1,
+        "max_iter": 100,
+        "penalty": "l2",
+        "solver": "liblinear"
+    },
+    "K-Neighbors Classifier": {
+        "algorithm": "auto",
+        "n_neighbors": 3,
+        "p": 2,
+        "weights": "distance"
+    },
+    "Support Vector Machine": {
+        "C": 10,
+        "gamma": "scale",
+        "kernel": "rbf",
+        "probability": true
+    },
+    "Naive Bayes": {
+        "var_smoothing": 1e-07
+    },
+    "AdaBoost": {
+        "learning_rate": 1,
+        "n_estimators": 150
+    },
+    "Bagging Classifier": {
+        "bootstrap": true,
+        "max_samples": 1.0,
+        "n_estimators": 10
+    }
+}

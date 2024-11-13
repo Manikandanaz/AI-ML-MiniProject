@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Spam Prediction</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .result.spam {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .result.not-spam {
+            background-color: #d4edda;
+            color: #155724;
+        }
+    </style>
+    <script>
+        function displayResult(prediction, model) {
+            const resultDiv = document.getElementById('result');
+            if (prediction === 'Spam') {
+                resultDiv.className = 'result spam';
+                resultDiv.textContent = `The email is classified as: Spam (Model used: ${model})`;
+            } else {
+                resultDiv.className = 'result not-spam';
+                resultDiv.textContent = `The email is classified as: Not Spam (Model used: ${model})`;
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h2 class="text-center">Email Spam Prediction</h2>
+        <form id="prediction-form">
+            <div class="form-group">
+                <label for="email">Enter Email Content:</label>
+                <textarea class="form-control" id="email" name="email" rows="8" placeholder="Type your email content here..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="model">Select Model:</label>
+                <select class="form-control" id="model" name="model">
+                    <option value="voting">Voting Classifier</option>
+                    <option value="logistic">Logistic Regression</option>
+                    <option value="random_forest">Random Forest Classifier</option>
+                </select>
+            </div>
+            <button type="button" class="btn btn-primary btn-block" onclick="makePrediction()">Predict</button>
+        </form>
+        <div id="result" class="result" style="display:none;"></div>
+    </div>
+
+    <script>
+        function makePrediction() {
+            const email = document.getElementById('email').value;
+            const model = document.getElementById('model').value;
+            
+            fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email: email, model: model })
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('result').style.display = 'block';
+                displayResult(data.prediction, model);
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>
