@@ -18,7 +18,7 @@ y = df['label']
 with open('./scripts/best_model_params.json', 'r') as json_file:
     best_params = json.load(json_file)
 # Converting the text data into numerical features using Count Vectorizer
-count_vectorizer = CountVectorizer(stop_words='english', max_features=5000)
+count_vectorizer = CountVectorizer(stop_words='english',lowercase=True)
 X_count = count_vectorizer.fit_transform(X)
 
 # Using SMOTE to oversample the minority class

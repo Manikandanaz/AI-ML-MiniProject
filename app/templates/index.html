@@ -7,23 +7,50 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         body {
-            background-color: #f8f9fa;
+            background-color: #e9f7ef;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
+            margin: 0;
         }
         .container {
-            background: white;
+            background: #ffffff;
             padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            max-width: 1200px;
+            width: 100%;
+            display: flex;
+        }
+        .form-container {
+            width: 45%;
+            padding-right: 40px;
+            background-color: #f0f8ff;
             border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        .result-container {
+            width: 55%;
+            padding-left: 40px;
+            border-left: 2px solid #cccccc;
+            background-color: #fefefe;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        .result-container h3 {
+            text-align: center;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
         }
         .result {
             margin-top: 20px;
             padding: 15px;
-            border-radius: 5px;
+            border-radius: 10px;
             font-weight: bold;
+            text-align: center;
+            animation: blinker 1s linear infinite;
         }
         .result.spam {
             background-color: #f8d7da;
@@ -33,46 +60,64 @@
             background-color: #d4edda;
             color: #155724;
         }
-    </style>
-    <script>
-        function displayResult(prediction, model) {
-            const resultDiv = document.getElementById('result');
-            if (prediction === 'Spam') {
-                resultDiv.className = 'result spam';
-                resultDiv.textContent = `The email is classified as: Spam (Model used: ${model})`;
-            } else {
-                resultDiv.className = 'result not-spam';
-                resultDiv.textContent = `The email is classified as: Not Spam (Model used: ${model})`;
+        @keyframes blinker {
+            50% {
+                opacity: 0;
             }
         }
-    </script>
-</head>
-<body>
-    <div class="container">
-        <h2 class="text-center">Email Spam Prediction</h2>
-        <form id="prediction-form">
-            <div class="form-group">
-                <label for="email">Enter Email Content:</label>
-                <textarea class="form-control" id="email" name="email" rows="8" placeholder="Type your email content here..."></textarea>
-            </div>
-            <div class="form-group">
-                <label for="model">Select Model:</label>
-                <select class="form-control" id="model" name="model">
-                    <option value="voting">Voting Classifier</option>
-                    <option value="logistic">Logistic Regression</option>
-                    <option value="random_forest">Random Forest Classifier</option>
-                </select>
-            </div>
-            <button type="button" class="btn btn-primary btn-block" onclick="makePrediction()">Predict</button>
-        </form>
-        <div id="result" class="result" style="display:none;"></div>
-    </div>
-
+        .matched-words {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f1f1f1;
+            border-radius: 5px;
+            text-align: center;
+        }
+        iframe {
+            width: 100%;
+            height: 300px;
+            border: none;
+            margin-top: 20px;
+        }
+    </style>
     <script>
+        function displayResult(prediction, model, matchedWords, limeHtmlLink) {
+            const resultDiv = document.getElementById('result');
+            const matchedWordsDiv = document.getElementById('matched-words');
+            const limeDiv = document.getElementById('lime-explanation');
+
+            // Update result with blinking effect and emojis
+            if (prediction === 'Spam') {
+                resultDiv.className = 'result spam';
+                resultDiv.innerHTML = `&#128308; The email is classified as: <b>Spam</b> (Model used: ${model}) &#128308;`;
+            } else {
+                resultDiv.className = 'result not-spam';
+                resultDiv.innerHTML = `&#128994; The email is classified as: <b>Not Spam</b> (Model used: ${model}) &#128994;`;
+            }
+
+            // Update matched words
+            if (matchedWords && matchedWords.length > 0 && prediction === 'Spam') {
+                matchedWordsDiv.style.display = 'block';
+                matchedWordsDiv.textContent = `Important spam words detected: ${matchedWords.join(', ')}`;
+            } else if (prediction === 'Not Spam') {
+                matchedWordsDiv.style.display = 'block';
+                matchedWordsDiv.textContent = `No spam words found. Good to go!`;
+            } else {
+                matchedWordsDiv.style.display = 'none';
+            }
+
+            // Show LIME explanation if available
+            if (limeHtmlLink) {
+                limeDiv.style.display = 'block';
+                limeDiv.innerHTML = `<iframe src="${limeHtmlLink}"></iframe>`;
+            } else {
+                limeDiv.style.display = 'none';
+            }
+        }
+
         function makePrediction() {
             const email = document.getElementById('email').value;
             const model = document.getElementById('model').value;
-            
+
             fetch('/predict', {
                 method: 'POST',
                 headers: {
@@ -83,10 +128,40 @@
             .then(response => response.json())
             .then(data => {
                 document.getElementById('result').style.display = 'block';
-                displayResult(data.prediction, model);
+                const matchedWords = Array.isArray(data.matched_words) ? data.matched_words : [];
+                displayResult(data.prediction, model, matchedWords, data.lime_html);
             })
             .catch(error => console.error('Error:', error));
         }
     </script>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container">
+            <h2 class="text-center">Email Spam Prediction</h2>
+            <form id="prediction-form">
+                <div class="form-group">
+                    <label for="email">Enter Email Content:</label>
+                    <textarea class="form-control" id="email" name="email" rows="8" placeholder="Type your email content here..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="model">Select Model:</label>
+                    <select class="form-control" id="model" name="model">
+                        <option value="voting">Voting Classifier</option>
+                        <option value="logistic">Logistic Regression</option>
+                        <option value="random_forest">Random Forest Classifier</option>
+                        <option value="naive_bayes">MultinomialNB</option> <!-- Updated to match 'naive_bayes' -->
+                    </select>
+                </div>
+                <button type="button" class="btn btn-primary btn-block" onclick="makePrediction()">Predict</button>
+            </form>
+        </div>
+        <div class="result-container">
+            <h3>Outcome</h3>
+            <div id="result" class="result" style="display:none;"></div>
+            <div id="matched-words" class="matched-words" style="display:none;"></div>
+            <div id="lime-explanation" style="display:none;"></div>
+        </div>
+    </div>
 </body>
 </html>
