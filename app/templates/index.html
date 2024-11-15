@@ -65,7 +65,7 @@
                 opacity: 0;
             }
         }
-        .matched-words {
+        .matched-words, .accuracy-info {
             margin-top: 10px;
             padding: 10px;
             background-color: #f1f1f1;
@@ -80,10 +80,11 @@
         }
     </style>
     <script>
-        function displayResult(prediction, model, matchedWords, limeHtmlLink) {
+        function displayResult(prediction, model, matchedWords, limeHtmlLink, trainAccuracy, testAccuracy) {
             const resultDiv = document.getElementById('result');
             const matchedWordsDiv = document.getElementById('matched-words');
             const limeDiv = document.getElementById('lime-explanation');
+            const accuracyDiv = document.getElementById('accuracy-info');
 
             // Update result with blinking effect and emojis
             if (prediction === 'Spam') {
@@ -112,6 +113,13 @@
             } else {
                 limeDiv.style.display = 'none';
             }
+
+            // Update accuracy information
+            accuracyDiv.style.display = 'block';
+            accuracyDiv.innerHTML = `
+                <p><strong>Train Accuracy:</strong> ${trainAccuracy}</p>
+                <p><strong>Test Accuracy:</strong> ${testAccuracy}</p>
+            `;
         }
 
         function makePrediction() {
@@ -129,7 +137,7 @@
             .then(data => {
                 document.getElementById('result').style.display = 'block';
                 const matchedWords = Array.isArray(data.matched_words) ? data.matched_words : [];
-                displayResult(data.prediction, model, matchedWords, data.lime_html);
+                displayResult(data.prediction, model, matchedWords, data.lime_html, data.train_accuracy, data.test_accuracy);
             })
             .catch(error => console.error('Error:', error));
         }
@@ -138,7 +146,7 @@
 <body>
     <div class="container">
         <div class="form-container">
-            <h2 class="text-center">Email Spam Prediction</h2>
+            <h2 class="text-center">Email Spam Classification</h2>
             <form id="prediction-form">
                 <div class="form-group">
                     <label for="email">Enter Email Content:</label>
@@ -150,7 +158,7 @@
                         <option value="voting">Voting Classifier</option>
                         <option value="logistic">Logistic Regression</option>
                         <option value="random_forest">Random Forest Classifier</option>
-                        <option value="naive_bayes">MultinomialNB</option> <!-- Updated to match 'naive_bayes' -->
+                        <option value="naive_bayes">MultinomialNB</option>
                     </select>
                 </div>
                 <button type="button" class="btn btn-primary btn-block" onclick="makePrediction()">Predict</button>
@@ -159,6 +167,7 @@
         <div class="result-container">
             <h3>Outcome</h3>
             <div id="result" class="result" style="display:none;"></div>
+            <div id="accuracy-info" class="accuracy-info" style="display:none;"></div>
             <div id="matched-words" class="matched-words" style="display:none;"></div>
             <div id="lime-explanation" style="display:none;"></div>
         </div>

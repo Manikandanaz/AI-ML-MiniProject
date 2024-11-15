@@ -1,7 +1,8 @@
 import pandas as pd
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import CountVectorizer,TfidfVectorizer
 from sklearn.model_selection import train_test_split
 from imblearn.over_sampling import SMOTE
+from imblearn.combine import SMOTETomek
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier,AdaBoostClassifier,BaggingClassifier,VotingClassifier
 import numpy as np
@@ -17,32 +18,52 @@ X = df['email']
 y = df['label']
 with open('./scripts/best_model_params.json', 'r') as json_file:
     best_params = json.load(json_file)
-# Converting the text data into numerical features using Count Vectorizer
-count_vectorizer = CountVectorizer(stop_words='english',lowercase=True)
-X_count = count_vectorizer.fit_transform(X)
 
-# Using SMOTE to oversample the minority class
-smote = SMOTE(random_state=42)
-X_resampled_count, y_resampled_count = smote.fit_resample(X_count, y)
+# Load hyperparameters for Logistic Regression
+with open('./scripts/best_model_params.json', 'r') as json_file:
+    best_params = json.load(json_file)
 
-X_train_smote, X_test_smote, y_train_smote, y_test_smote = train_test_split(X_resampled_count, y_resampled_count, test_size=0.3, random_state=42)
+# TF-IDF Vectorizer with bigrams
+tfidf_vectorizer = TfidfVectorizer(stop_words='english', lowercase=True)
+X_tfidf = tfidf_vectorizer.fit_transform(X)
 
-if hasattr(X_train_smote, 'toarray'):
-        X_train_smote = X_train_smote.toarray()
-if hasattr(X_test_smote, 'toarray'):
-        X_test_smote = X_test_smote.toarray()
 
-mdl=LogisticRegression(**best_params.get("Logistic Regression", {}),class_weight='balanced',random_state=42)
-# Train the model
-mdl.fit(X_train_smote, y_train_smote)
+# Handle class imbalance using SMOTETomek
+smote = SMOTETomek(random_state=42)
+X_resampled, y_resampled = smote.fit_resample(X_tfidf, y)
 
-# Make predictions on the test set
-y_pred = mdl.predict(X_test_smote)
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=0.2, random_state=42,stratify=y_resampled)
 
-# Evaluate model performance
-accuracy = accuracy_score(y_test_smote, y_pred)
-report = classification_report(y_test_smote, y_pred)
+# Train Logistic Regression model with balanced class weights
+mdl = LogisticRegression( class_weight='balanced', random_state=42)
+mdl.fit(X_train, y_train)
 
-# Save the trained model and vectorizer
-with open('mdl_logistic.pkl', 'wb') as mdl_logistic:
-    pickle.dump(mdl, mdl_logistic)
+# Evaluate on training data
+y_pred_train = mdl.predict(X_train)
+accuracy_train = accuracy_score(y_train, y_pred_train)
+print("Train Accuracy:", accuracy_train)
+
+# Evaluate on test data
+y_pred_test = mdl.predict(X_test)
+accuracy_test = accuracy_score(y_test, y_pred_test)
+report = classification_report(y_test, y_pred_test)
+print("Test Accuracy:", accuracy_test)
+print("Classification Report:\n", report)
+
+# Evaluate model
+train_accuracy = accuracy_score(y_train, mdl.predict(X_train))
+test_accuracy = accuracy_score(y_test, mdl.predict(X_test))
+
+# Save model and metadata
+model_metadata = {
+    'model': mdl,
+    'train_accuracy': train_accuracy,
+    'test_accuracy': test_accuracy
+}
+with open('mdl_logistic.pkl', 'wb') as f:
+    pickle.dump(model_metadata, f)
+
+# Save vectorizer
+with open('tfidf_vectorizer.pkl', 'wb') as f:
+    pickle.dump(tfidf_vectorizer, f)

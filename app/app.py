@@ -6,7 +6,7 @@ import lime
 import lime.lime_text
 
 # Set up logging for error handling
-logging.basicConfig(level=logging.DEBUG)  # Changed to DEBUG to get detailed logs
+logging.basicConfig(level=logging.DEBUG)
 
 # Load the pre-trained models and vectorizers
 MODEL_PATHS = {
@@ -17,25 +17,32 @@ MODEL_PATHS = {
 }
 VECTORIZER_PATHS = {
     'count_vectorizer': 'count_vectorizer.pkl',
-    'tfidf_vectorizer': 'nb_vectorizer.pkl'
+    'tfidf_vectorizer': 'nb_vectorizer.pkl',
+    'logistic': 'tfidf_vectorizer.pkl'
 }
 
-# Load the vectorizers
+# Load vectorizers
 vectorizers = {}
 for vec_name, vec_path in VECTORIZER_PATHS.items():
     if not os.path.exists(vec_path):
-        raise FileNotFoundError(f"Vectorizer file '{vec_path}' not found. Make sure to save the vectorizer.")
+        raise FileNotFoundError(f"Vectorizer file '{vec_path}' not found.")
     with open(vec_path, 'rb') as vectorizer_file:
         vectorizers[vec_name] = pickle.load(vectorizer_file)
 
-# Load all models when the app starts to avoid repeated loading
+# Load models with accuracy
 models = {}
+model_accuracies = {}
 for model_name, model_path in MODEL_PATHS.items():
     if not os.path.exists(model_path):
         logging.warning(f"Model file '{model_path}' not found. Skipping this model.")
         continue
     with open(model_path, 'rb') as model_file:
-        models[model_name] = pickle.load(model_file)
+        model_data = pickle.load(model_file)
+        models[model_name] = model_data['model']
+        model_accuracies[model_name] = {
+            'train_accuracy': model_data.get('train_accuracy', 'N/A'),
+            'test_accuracy': model_data.get('test_accuracy', 'N/A')
+        }
 
 # Create a Flask app
 app = Flask(__name__)
@@ -46,7 +53,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Define the home route
 @app.route('/')
 def home():
-    return render_template('index.html')  # Render a simple HTML form for input
+    return render_template('index.html', accuracies=model_accuracies)  # Pass accuracies to frontend
 
 # Define the predict route
 @app.route('/predict', methods=['POST'])
@@ -75,24 +82,18 @@ def predict():
             logging.info(f"Using model: {model_choice}")
 
             # Select the appropriate vectorizer for the chosen model
-            if model_choice in ( 'naive_bayes','voting'):
-                vectorizer = vectorizers['tfidf_vectorizer']
-            else:
-                vectorizer = vectorizers['count_vectorizer']
+            vectorizer = vectorizers['tfidf_vectorizer'] if model_choice in ('naive_bayes', 'voting') else vectorizers['count_vectorizer']
 
             # Preprocess email content
             email_content_vectorized = vectorizer.transform([email_content])
 
-            # Convert data to dense if required by the model
-            #if model_choice == 'voting':
-                #email_content_vectorized = email_content_vectorized.toarray()
-
             # Predict if the email is spam or not
             prediction = model.predict(email_content_vectorized)
-            logging.info(f"Prediction result: {prediction[0]}")
-
-            # Return the prediction result
             result = 'Spam' if prediction[0] == 1 else 'Not Spam'
+
+            # Get model accuracies
+            train_accuracy = model_accuracies[model_choice]['train_accuracy']
+            test_accuracy = model_accuracies[model_choice]['test_accuracy']
 
             # Generate LIME explanation
             explainer = lime.lime_text.LimeTextExplainer(class_names=['Not Spam', 'Spam'])
@@ -100,9 +101,6 @@ def predict():
             # LIME requires a function that takes in raw text and returns prediction probabilities
             def predict_probabilities(texts):
                 vectorized_texts = vectorizer.transform(texts)
-                # Convert to dense if voting model is used
-                if model_choice == 'voting':
-                    vectorized_texts = vectorized_texts.toarray()
                 return model.predict_proba(vectorized_texts)
 
             # Explain the model's prediction for the given text
@@ -125,6 +123,8 @@ def predict():
 
             return jsonify({
                 'prediction': result,
+                'train_accuracy': train_accuracy,
+                'test_accuracy': test_accuracy,
                 'matched_words': matched_words_message,
                 'lime_html': f'/lime/lime_explanation.html'  # Send URL for the LIME explanation
             })

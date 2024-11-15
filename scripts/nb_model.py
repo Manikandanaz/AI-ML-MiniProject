@@ -29,17 +29,19 @@ X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, te
 nb_model = MultinomialNB()
 nb_model.fit(X_train, y_train)
 
-# Save the vectorizer and model for later use
+# Evaluate model
+train_accuracy = accuracy_score(y_train, nb_model.predict(X_train))
+test_accuracy = accuracy_score(y_test, nb_model.predict(X_test))
+
+# Save model and metadata
+model_metadata = {
+    'model': nb_model,
+    'train_accuracy': train_accuracy,
+    'test_accuracy': test_accuracy
+}
+with open('nb_mdl.pkl', 'wb') as f:
+    pickle.dump(model_metadata, f)
+
+# Save vectorizer
 with open('nb_vectorizer.pkl', 'wb') as f:
     pickle.dump(tfidf_vectorizer, f)
-
-with open('nb_mdl.pkl', 'wb') as f:
-    pickle.dump(nb_model, f)
-
-# Step 2: Evaluate the model
-y_pred = nb_model.predict(X_test)
-accuracy = accuracy_score(y_test, y_pred)
-report = classification_report(y_test, y_pred)
-
-print(f"Accuracy: {accuracy}")
-print(report)

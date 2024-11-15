@@ -7,6 +7,7 @@ from sklearn.ensemble import RandomForestClassifier, VotingClassifier
 from sklearn.naive_bayes import GaussianNB,MultinomialNB
 from sklearn.metrics import accuracy_score, classification_report
 import pickle
+import json
 
 # Step 1: Read and preprocess data
 df = pd.read_csv('./data/spam_or_not_spam.csv')
@@ -50,7 +51,7 @@ X_train_smote, X_test_smote, y_train_smote, y_test_smote = train_test_split(X_re
 # Define the voting classifier with Logistic Regression, Random Forest, and GaussianNB
 mdl = VotingClassifier(estimators=[
     ('lr', LogisticRegression(**best_params.get("Logistic Regression", {}),class_weight='balanced',random_state=42)),
-    ('rf', RandomForestClassifier(**best_params.get("Random Forest", {}),class_weight='balanced',random_state=42)),
+    #('rf', RandomForestClassifier(**best_params.get("Random Forest", {}),class_weight='balanced',random_state=42)),
     ('gnb', MultinomialNB(alpha=0.5))
 ], voting='soft')
 
@@ -67,9 +68,29 @@ report = classification_report(y_test_smote, y_pred)
 print(f"Accuracy: {accuracy}")
 print(report)
 
-# Save the trained model and vectorizer for later use
+
+# Evaluate on test data
+y_pred_test = mdl.predict(X_test_smote)
+test_accuracy = accuracy_score(y_test_smote, y_pred_test)
+report = classification_report(y_test_smote, y_pred_test)
+# Evaluate on training data
+y_pred_train = mdl.predict(X_train_smote)
+train_accuracy = accuracy_score(y_train_smote, y_pred_train)
+# Print evaluation results
+print(f"Train Accuracy: {train_accuracy}")
+print(f"Test Accuracy: {test_accuracy}")
+print(report)
+
+# Save the model and vectorizer along with metadata
+model_metadata = {
+    'model': mdl,
+    'train_accuracy': train_accuracy,
+    'test_accuracy': test_accuracy,
+    'vectorizer': tfidf_vectorizer  # Include the vectorizer for consistent preprocessing
+}
+
 with open('mdl.pkl', 'wb') as model_file:
-    pickle.dump(mdl, model_file)
+    pickle.dump(model_metadata, model_file)
 
 #with open('count_vectorizer.pkl', 'wb') as vectorizer_file:
 #    pickle.dump(count_vectorizer, vectorizer_file)
