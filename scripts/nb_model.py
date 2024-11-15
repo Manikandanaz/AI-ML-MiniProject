@@ -15,7 +15,7 @@ X = df['email']
 y = df['label']
 
 # Use TfidfVectorizer for feature extraction
-tfidf_vectorizer = TfidfVectorizer(stop_words='english', lowercase=True, ngram_range=(1, 2), max_features=5000)
+tfidf_vectorizer = TfidfVectorizer(stop_words='english', lowercase=True)
 X_tfidf = tfidf_vectorizer.fit_transform(X)
 
 # Handle class imbalance with SMOTETomek

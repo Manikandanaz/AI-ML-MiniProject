@@ -13,12 +13,14 @@ MODEL_PATHS = {
     'voting': 'mdl.pkl',
     'logistic': 'mdl_logistic.pkl',
     'random_forest': 'mdl_random.pkl',
-    'naive_bayes': 'nb_mdl.pkl'
+    'naive_bayes': 'nb_mdl.pkl',
+    'voting_cnt':'mdl_voting_cnt.pkl'
 }
 VECTORIZER_PATHS = {
     'count_vectorizer': 'count_vectorizer.pkl',
     'tfidf_vectorizer': 'nb_vectorizer.pkl',
-    'logistic': 'tfidf_vectorizer.pkl'
+    'logistic': 'tfidf_vectorizer.pkl',
+    'voting_cnt_pkl':'mdl_cnt_vectorizer.pkl'
 }
 
 # Load vectorizers
@@ -50,10 +52,16 @@ app = Flask(__name__)
 # Get the absolute path of the current directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+# Developer information
+developer_info = {
+    'name': 'Manikandan V',
+    'email': 'maniatramco@gmail.com',
+    'github': 'https://github.com/Manikandanaz'
+}
 # Define the home route
 @app.route('/')
 def home():
-    return render_template('index.html', accuracies=model_accuracies)  # Pass accuracies to frontend
+    return render_template('index.html', accuracies=model_accuracies,developer=developer_info)  # Pass accuracies to frontend
 
 # Define the predict route
 @app.route('/predict', methods=['POST'])
@@ -81,8 +89,15 @@ def predict():
             model = models[model_choice]
             logging.info(f"Using model: {model_choice}")
 
+            #vectorizer = vectorizers['tfidf_vectorizer'] if model_choice in ('naive_bayes', 'voting') else vectorizers['count_vectorizer']
+
             # Select the appropriate vectorizer for the chosen model
-            vectorizer = vectorizers['tfidf_vectorizer'] if model_choice in ('naive_bayes', 'voting') else vectorizers['count_vectorizer']
+            if model_choice in ('naive_bayes', 'voting'):
+                vectorizer = vectorizers['tfidf_vectorizer']
+            elif model_choice =='voting_cnt':
+                vectorizer = vectorizers['voting_cnt_pkl']
+            else:
+                vectorizer=vectorizers['count_vectorizer']
 
             # Preprocess email content
             email_content_vectorized = vectorizer.transform([email_content])

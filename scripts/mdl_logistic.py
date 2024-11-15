@@ -19,10 +19,6 @@ y = df['label']
 with open('./scripts/best_model_params.json', 'r') as json_file:
     best_params = json.load(json_file)
 
-# Load hyperparameters for Logistic Regression
-with open('./scripts/best_model_params.json', 'r') as json_file:
-    best_params = json.load(json_file)
-
 # TF-IDF Vectorizer with bigrams
 tfidf_vectorizer = TfidfVectorizer(stop_words='english', lowercase=True)
 X_tfidf = tfidf_vectorizer.fit_transform(X)

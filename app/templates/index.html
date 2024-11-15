@@ -7,36 +7,64 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         body {
-            background-color: #e9f7ef;
+            background-color: #c6b81df8;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            margin: 0;
+            min-height: 150vh;
+            margin: 5;
         }
         .container {
-            background: #ffffff;
+            background: #4f2525;
             padding: 30px;
             border-radius: 15px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            max-width: 1200px;
+            max-width: 1400px;
             width: 100%;
             display: flex;
+            flex-direction: row;
+            align-items: flex-start;
         }
+        .sidebar {
+            width: 90%;
+            margin-right: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .image-container img {
+            max-width: 90%;
+            height: 50%;
+            border-radius: 20px;
+        }
+        .developer-info {
+            position: absolute;
+            top: 655px;
+            right: 1090px;
+            width: 340px;
+            padding: 15px;
+            background-color: #efe3e3;
+            border-radius: 10px;
+            text-align: bottom;
+            box-shadow: 0 4px 8px rgba(165, 75, 75, 0.2);
+            }
+       
         .form-container {
-            width: 45%;
-            padding-right: 40px;
-            background-color: #f0f8ff;
+            width: 90%;
+            padding-right: 50px;
+            background-color: #fafbfc;
             border-radius: 10px;
             padding: 20px;
+            margin-bottom: 20px;
+
         }
         .result-container {
-            width: 55%;
+            width: 90%;
             padding-left: 40px;
-            border-left: 2px solid #cccccc;
+            border-left: 2px solid #ad8686;
             background-color: #fefefe;
             border-radius: 10px;
-            padding: 20px;
+            padding: 30px;
         }
         .result-container h3 {
             text-align: center;
@@ -74,7 +102,7 @@
         }
         iframe {
             width: 100%;
-            height: 300px;
+            height: 400px;
             border: none;
             margin-top: 20px;
         }
@@ -144,7 +172,20 @@
     </script>
 </head>
 <body>
+    
+    <div class="developer-info">
+        <h3>Developed By</h3>
+        <p><strong>Name:</strong> {{ developer.name }}</p>
+        <p><strong>Email:</strong> <a href="mailto:{{ developer.email }}">{{ developer.email }}</a></p>
+        <p><strong>GitHub:</strong> <a href="{{ developer.github }}" target="_blank">{{ developer.github }}</a></p>
+    </div>
+ 
+    
     <div class="container">
+        <div class="image-container">
+            <img src="{{ url_for('static', filename='images/spam2.webp') }}" alt="Spam Image">
+        </div>
+       
         <div class="form-container">
             <h2 class="text-center">Email Spam Classification</h2>
             <form id="prediction-form">
@@ -155,15 +196,17 @@
                 <div class="form-group">
                     <label for="model">Select Model:</label>
                     <select class="form-control" id="model" name="model">
-                        <option value="voting">Voting Classifier</option>
+                        <option value="voting">Voting Classifier - TfidfVectorizer</option>
                         <option value="logistic">Logistic Regression</option>
-                        <option value="random_forest">Random Forest Classifier</option>
+                        <!--<option value="random_forest">Random Forest Classifier</option>-->
                         <option value="naive_bayes">MultinomialNB</option>
+                        <option value="voting_cnt">Voting Classfier - CountVectorizer</option>
                     </select>
                 </div>
                 <button type="button" class="btn btn-primary btn-block" onclick="makePrediction()">Predict</button>
             </form>
         </div>
+      
         <div class="result-container">
             <h3>Outcome</h3>
             <div id="result" class="result" style="display:none;"></div>
@@ -171,6 +214,8 @@
             <div id="matched-words" class="matched-words" style="display:none;"></div>
             <div id="lime-explanation" style="display:none;"></div>
         </div>
+        
     </div>
+   
 </body>
 </html>
