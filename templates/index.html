@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heart Disease Prediction</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-image: url('https://images.unsplash.com/photo-1516116216624-53e697fedbe9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwzNjUyOXwwfDF8c2VhcmNofDV8fGhlYXJ0fGVufDB8fHx8MTY4MDk3NjY3MA&ixlib=rb-1.2.1&q=80&w=1080');
+            background-size: cover;
+            background-position: center;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #ffffff;
+        }
+        .container {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            margin: auto;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+        }
+        .form-group small {
+            color: #d1d1d1;
+        }
+        .btn-primary {
+            margin-top: 20px;
+        }
+        .alert {
+            margin-top: 20px;
+            font-size: 1.2em;
+            text-align: center;
+        }
+    
+        .blinking-heart {
+            font-weight: bold;
+            animation: blinking 1.5s infinite;
+        }
+        @keyframes blinking {
+            0% { opacity: 1; }
+            50% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="text-center">Heart Disease Prediction</h2>
+        <form action="/predict" method="post" class="mt-4" autocomplete="off">
+            <div class="form-group">
+                <label for="age">Age: <i class="fas fa-info-circle" title="Age in years. Risk categories: Below 45 (Low risk), 45-60 (Medium risk), Above 60 (High risk)."></i></label>
+                <input type="number" class="form-control" id="age" name="age" value="{{ request.form.age if request.form.age else 45 }}" required>
+                <small class="form-text text-muted">Enter your age in years.</small>
+            </div>
+            <div class="form-group">
+                <label for="cholesterol">Cholesterol: <i class="fas fa-info-circle" title="Cholesterol level in mg/dL. Risk categories: Below 200 (Low risk), 200-239 (Borderline risk), 240 and above (High risk)."></i></label>
+                <input type="number" class="form-control" id="cholesterol" name="cholesterol" value="{{ request.form.cholesterol if request.form.cholesterol else 200 }}" required>
+                <small class="form-text text-muted">Enter your cholesterol level in mg/dL.</small>
+            </div>
+            <div class="form-group">
+                <label for="max_heart_rate">Max Heart Rate Achieved: <i class="fas fa-info-circle" title="Maximum heart rate during exercise. Risk categories: Lower values might indicate higher risk in older individuals."></i></label>
+                <input type="number" class="form-control" id="max_heart_rate" name="max_heart_rate" value="{{ request.form.max_heart_rate if request.form.max_heart_rate else 150 }}" required>
+                <small class="form-text text-muted">Enter the maximum heart rate you achieved during exercise.</small>
+            </div>
+            <div class="form-group">
+                <label for="st_depression">ST Depression: <i class="fas fa-info-circle" title="ST depression induced by exercise. Risk categories: Below 1 (Low risk), 1-2 (Moderate risk), Above 2 (High risk)."></i></label>
+                <input type="number" step="0.1" class="form-control" id="st_depression" name="st_depression" value="{{ request.form.st_depression if request.form.st_depression else 1.0 }}" required>
+                <small class="form-text text-muted">Enter the ST depression induced by exercise relative to rest.</small>
+            </div>
+            <div class="form-group">
+                <label for="chest_pain_type">Chest Pain Type: <i class="fas fa-info-circle" title="0: Typical Angina (High risk), 1: Atypical Angina (Medium risk), 2: Non-anginal Pain (Low risk), 3: Asymptomatic (Low risk)."></i></label>
+                <select class="form-control" id="chest_pain_type" name="chest_pain_type" required>
+                    <option value="" disabled>Select Chest Pain Type</option>
+                    <option value="0" {% if request.form.chest_pain_type == '0' %}selected{% endif %}>Typical Angina</option>
+                    <option value="1" {% if request.form.chest_pain_type == '1' %}selected{% endif %}>Atypical Angina</option>
+                    <option value="2" {% if request.form.chest_pain_type == '2' %}selected{% endif %}>Non-anginal Pain</option>
+                    <option value="3" {% if request.form.chest_pain_type == '3' %}selected{% endif %}>Asymptomatic</option>
+                    
+                </select>
+                <small class="form-text text-muted">Select the type of chest pain you experienced.</small>
+            </div>
+            <div class="form-group">
+                <label for="major_vessels_blocked">Major Vessels Blocked: <i class="fas fa-info-circle" title="Number of major vessels blocked (0-3). Higher values indicate greater risk."></i></label>
+                <select class="form-control" id="major_vessels_blocked" name="major_vessels_blocked" required>
+                    <option value="" disabled>Select Major Vessels Blocked</option>
+                    <option value="0" {% if request.form.major_vessels_blocked == '0' %}selected{% endif %}>0</option>
+                    <option value="1" {% if request.form.major_vessels_blocked == '1' %}selected{% endif %}>1</option>
+                    <option value="2" {% if request.form.major_vessels_blocked == '2' %}selected{% endif %}>2</option>
+                    <option value="3" {% if request.form.major_vessels_blocked == '3' %}selected{% endif %}>3</option>
+                    
+                </select>
+                <small class="form-text text-muted">Enter the number of major vessels (0-3) colored by fluoroscopy.</small>
+            </div>
+            <div class="form-group">
+                <label for="thalassemia">Thalassemia: <i class="fas fa-info-circle" title="0: Normal (Low risk), 1: Fixed Defect (Higher risk), 2: Reversible Defect (Moderate risk)."></i></label>
+                <select class="form-control" id="thalassemia" name="thalassemia" required>
+                    <option value="" disabled>Select Thalassemia Status</option>
+                    <option value="0" {% if request.form.thalassemia == '0' %}selected{% endif %}>Normal</option>
+                    <option value="1" {% if request.form.thalassemia == '1' %}selected{% endif %}>Fixed Defect</option>
+                    <option value="2" {% if request.form.thalassemia == '2' %}selected{% endif %}>Reversible Defect</option>
+                    
+                </select>
+                <small class="form-text text-muted">Select your thalassemia status.</small>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Predict</button>
+        </form>
+        {% if prediction_result %}
+        <div class="alert alert-{{ result_color }}">
+            <span class="blinking-heart" style="font-size: 2em;">{{ prediction_result }}</span>
+        </div>
+        {% endif %}
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
